@@ -1,18 +1,20 @@
 # Build stage
 FROM node:18-alpine AS builder
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+
+# First copy only package files for caching
+COPY package.json package-lock.json ./
+
+# Install prod dependencies only
+RUN npm ci --omit=dev
+
+# Copy remaining files
 COPY . .
-RUN npm run build
 
 # Production stage
 FROM node:18-alpine
 WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package*.json ./
-COPY .env.production .env
+COPY --from=builder /app ./
 
-EXPOSE 80
-CMD ["node", "dist/server.js"]
+CMD ["node", "server.js"]
