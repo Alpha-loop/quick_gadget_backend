@@ -1,0 +1,14 @@
+name: Deploy
+on: [push]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: docker build -t gadgetswap-api .
+      - run: echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      - run: docker push yourusername/gadgetswap-api:latest
+      - run: ssh deploy@your-server "docker pull yourusername/gadgetswap-api && docker-compose up -d"
